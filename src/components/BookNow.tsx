@@ -26,6 +26,17 @@ const timeSlots = [
   { time: "10 - 11 AM", available: true },
 ];
 
+const convertToThumbnailUrl = (url: string) => {
+  if (!url || !url.includes('drive.google.com')) return url;
+  
+  // Extract the file ID from various possible Google Drive URL formats
+  const fileId = url.match(/\/d\/(.*?)\/view/)?.[1] || // matches /d/FILE_ID/view
+                url.match(/id=(.*?)(&|$)/)?.[1];        // matches id=FILE_ID
+  
+  if (!fileId) return url;
+  return `https://drive.google.com/thumbnail?id=${fileId}`;
+};
+
 const BookNow: React.FC<BookNowProps> = ({
   providerData,
   selectedProvider,
@@ -52,73 +63,80 @@ const BookNow: React.FC<BookNowProps> = ({
       display: "flex", 
       flexDirection: "column",
       height: "100vh",
-      fontFamily: "Arial, sans-serif",
-      overflow: "hidden"
+      fontFamily: "Inter, sans-serif",
+      background: "#fffaf6"
     }}>
       {/* Main Content Container */}
       <div style={{ 
         display: "flex",
         flex: 1,
-        minHeight: 0
+        minHeight: 0,
+        justifyContent: "center",
+        padding: "40px 24px"
       }}>
-        {/* Provider Selection - Left Side */}
+        {/* Provider Selection Container */}
         <div style={{ 
-          width: "60%",
-          overflowY: "scroll",
-          padding: "24px",
-          borderRight: "1px solid #eee",
-          background: "#F9F9F9"
+          width: "1000px",
+          maxWidth: "100%",
+          padding: "0 24px",
         }}>
-          <h3 style={{display: 'flex', justifyContent: 'center'}}>Choose your Provider</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "25px" }}>
+          <h1 style={{ textAlign: 'center', fontSize: '30px', marginBottom: '48px', color:'#333', fontWeight: '600' }}>Choose your Provider</h1>
+          <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
             {formattedProviders.map((provider) => (
               <div
                 key={provider.id}
                 style={{
-                  border: selectedProvider === provider.name ? "2px solid #E57373" : "1px solid #ccc",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
+                  padding: "40px",
                   background: "white",
+                  maxWidth: "1000px",
+                  margin: "0 auto",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  borderRadius: "3%",
+                  border: `2px solid ${selectedProvider === provider.id ? '#007AFF' : '#E5E5E5'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out'
                 }}
-                onClick={() => onProviderSelect(provider.name)}
               >
-                {/* Top section with profile info */}
-                <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
+                {/* Provider Name and Pronouns Header */}
+                <h2 style={{ 
+                  fontSize: "36px", 
+                  marginTop: 0, 
+                  marginBottom: "24px",
+                  fontWeight: "500"
+                }}>
+                  {provider.name}
+                  <span style={{ 
+                    fontSize: "16px", 
+                    color: "#666", 
+                    fontWeight: "normal",
+                    marginLeft: "8px" 
+                  }}>(she/her)</span>
+                </h2>
+  
+                <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
+                  {/* Profile Image */}
                   <div style={{
-                    width: "100px",
-                    height: "100px",
+                    width: "120px",
+                    height: "120px",
                     borderRadius: "50%",
-                    flexShrink: 0,
-                    background: provider.headshot ? "grey" : "#f0f0f0",
-                    overflow: "hidden"
+                    overflow: "hidden",
+                    flexShrink: 0
                   }}>
                     {provider.headshot ? (
                       <img 
-                        // Try one of these URL formats:
-                        // Option 1:
-                        src="https://drive.google.com/thumbnail?id=1ABgqNldtihr8DpniPyrPWqoSgu-RR5Uj"
-                        // Option 2:
-                        // src="https://lh3.googleusercontent.com/d/1ABgqNldtihr8DpniPyrPWqoSgu-RR5Uj"
-                        // Option 3:
-                        // src="https://drive.google.com/uc?id=1ABgqNldtihr8DpniPyrPWqoSgu-RR5Uj"
+                        src={convertToThumbnailUrl(provider.headshot)}
                         style={{  
                           width: "100%",
                           height: "100%",
                           objectFit: "cover"
                         }}
-                        onError={(e) => {
-                          console.error('Image failed to load');
-                          e.currentTarget.style.display = 'none';
-                        }}
+                        loading="lazy"
                       />
                     ) : (
                       <div style={{
                         width: "100%",
                         height: "100%",
+                        background: "#f0f0f0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -129,18 +147,39 @@ const BookNow: React.FC<BookNowProps> = ({
                       </div>
                     )}
                   </div>
-                  <div style ={{ display: "block"}}>
-                    <h4 style={{ margin: "0 0 10px 0" }}>{provider.name}</h4>
-                    <p style={{ margin: "0 0 8px 0", fontSize: "15px" }}>{provider.role}</p>
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      {provider.specialties.slice(0, 3).map((specialty: string, i: number) => (
+  
+                  {/* Specialties Container */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      display: "flex", 
+                      flexWrap: "wrap", 
+                      gap: "8px", 
+                      marginBottom: "16px" 
+                    }}>
+
+                      <span style={{
+                        background: "#f5f5f5",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        fontSize: "14px"
+                      }}>
+                        {provider.role}
+                      </span>
+                    </div>
+  
+                    <div style={{ 
+                      display: "flex", 
+                      flexWrap: "wrap", 
+                      gap: "8px" 
+                    }}>
+                      {provider.specialties.slice(0,6).map((specialty: string, index: number) => (
                         <span
-                          key={i}
+                          key={index}
                           style={{
-                            background: "#f0f0f0",
-                            padding: "4px 8px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
+                            background: "#f5f5f5",
+                            padding: "6px 12px",
+                            borderRadius: "20px",
+                            fontSize: "14px"
                           }}
                         >
                           {specialty}
@@ -150,123 +189,23 @@ const BookNow: React.FC<BookNowProps> = ({
                   </div>
                 </div>
   
-                {/* Bottom section with availability and button */}
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderTop: "1px solid #eee",
-                  paddingTop: "16px",
-                  marginTop: "auto"
+                {/* Description Text */}
+                <p style={{ 
+                  color: "#555",
+                  lineHeight: "1.8",
+                  fontSize: "16px",
+                  margin: "0"
                 }}>
-                  <div>
-                    <span style={{ color: "#666", fontSize: "14px" }}>Next availability:</span>
-                    <span style={{ marginLeft: "8px", fontWeight: "500" }}>Aug 15</span>
-                  </div>
-                  <button
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "20px",
-                      border: "1px solid #E57373",
-                      background: selectedProvider === provider.name ? "#E57373" : "white",
-                      color: selectedProvider === provider.name ? "white" : "#E57373",
-                      cursor: "pointer"
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onProviderSelect(provider.name);
-                    }}
-                  >
-                    {selectedProvider === provider.name ? "Selected" : "Select Provider"}
-                  </button>
-                </div>
+                  {provider.name} has always known that their role in the Mental Health Industry was a "calling" not just a choice. They are passionate about assisting clients with improving their quality of life and daily functioning during the most delicate and vulnerable episodes in their lives. They assist adults, couples and families with developing coping strategies, mental health/interpersonal...
+                </p>
               </div>
             ))}
           </div>
         </div>
-  
-        {/* Calendar - Right Side */}
-        <div style={{ 
-          width: "40%",
-          padding: "24px",
-          overflow: "auto"
-        }}>
-          <h3>Choose a Date</h3>
-          <p style={{ fontSize: "14px" }}>Central Time (UTC-6)</p>
-          <input
-            type="date"
-            style={{
-              width: "100%",
-              padding: "8px",
-              marginBottom: "16px",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-            }}
-            onChange={(e) => onDateSelect(e.target.value)}
-          />
-          <div>
-            <h4>Available Times</h4>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {timeSlots.map((slot, index) => (
-                <button
-                  key={index}
-                  disabled={!slot.available}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    background: slot.available
-                      ? selectedTime === slot.time
-                        ? "#E57373"
-                        : "#f9f9f9"
-                      : "#e0e0e0",
-                    cursor: slot.available ? "pointer" : "not-allowed",
-                    color: slot.available ? "#000" : "#999",
-                  }}
-                  onClick={() => slot.available && onTimeSelect(slot.time)}
-                >
-                  {slot.time}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      {/* Footer */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "16px 50px",
-        background: "#41766c",
-        boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.1)"
-      }}>
-        <button 
-          style={{ 
-            padding: "8px 16px", 
-            borderRadius: "4px", 
-            background: "#ccc", 
-            border: "none" 
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          style={{
-            padding: "8px 16px",
-            borderRadius: "4px",
-            background: selectedProvider && selectedDate && selectedTime ? "#E57373" : "#ccc",
-            border: "none",
-            color: "#fff",
-            cursor: selectedProvider && selectedDate && selectedTime ? "pointer" : "not-allowed",
-          }}
-          disabled={!selectedProvider || !selectedDate || !selectedTime}
-        >
-          Confirm Session
-        </button>
       </div>
     </div>
   );
 
 }
+
 export default BookNow;
