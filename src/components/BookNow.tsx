@@ -1,16 +1,26 @@
-import { CenterFocusStrong } from '@mui/icons-material';
 import React from 'react';
+import ProviderFilter from './ProviderFilter';
+
+interface RawProvider {
+  'untitled': string;
+  'Full Name': string;
+  'License Type': string;
+  'Professional Headshot': string;
+  'Specialties Expertise': string;
+  'Licensed States': string;
+}
 
 interface Provider {
   id: string;
   name: string;
   role: string;
+  headshot: string;
   specialties: string[];
   licensedStates: string[];
 }
 
 interface BookNowProps {
-  providerData: any[]; // Replace 'any' with your actual data type
+  providerData: RawProvider[];
   selectedProvider?: string;
   selectedDate?: string;
   selectedTime?: string;
@@ -19,20 +29,10 @@ interface BookNowProps {
   onTimeSelect: (time: string) => void;
 }
 
-const timeSlots = [
-  { time: "7 - 8 AM", available: true },
-  { time: "8 - 9 AM", available: true },
-  { time: "9 - 10 AM", available: false },
-  { time: "10 - 11 AM", available: true },
-];
-
 const convertToThumbnailUrl = (url: string) => {
   if (!url || !url.includes('drive.google.com')) return url;
-  
-  // Extract the file ID from various possible Google Drive URL formats
-  const fileId = url.match(/\/d\/(.*?)\/view/)?.[1] || // matches /d/FILE_ID/view
-                url.match(/id=(.*?)(&|$)/)?.[1];        // matches id=FILE_ID
-  
+  const fileId = url.match(/\/d\/(.*?)\/view/)?.[1] || 
+                 url.match(/id=(.*?)(&|$)/)?.[1];
   if (!fileId) return url;
   return `https://drive.google.com/thumbnail?id=${fileId}`;
 };
@@ -40,23 +40,45 @@ const convertToThumbnailUrl = (url: string) => {
 const BookNow: React.FC<BookNowProps> = ({
   providerData,
   selectedProvider,
-  selectedDate,
-  selectedTime,
-  onProviderSelect,
-  onDateSelect,
-  onTimeSelect
+  onProviderSelect
 }) => {
-  // Transform provider data into required format
-  const formattedProviders = providerData.map(provider => ({
-    id: provider['untitled'],
-    name: provider['Full Name'],
-    role: provider['License Type'],
-    headshot: provider['Professional Headshot'],
-    specialties: provider['Specialties Expertise']?.includes(', ') 
-      ? provider['Specialties Expertise']?.split(', ')
-      : provider['Specialties Expertise']?.split(' ') || [],
-    licensedStates: provider['Licensed States']?.split(', ') || []
-  }));
+  const formattedProviders = React.useMemo(() => 
+    providerData.map(provider => ({
+      id: provider['untitled'],
+      name: provider['Full Name'],
+      role: provider['License Type'],
+      headshot: provider['Professional Headshot'],
+      specialties: provider['Specialties Expertise']?.includes(', ') 
+        ? provider['Specialties Expertise']?.split(', ')
+        : provider['Specialties Expertise']?.split(' ') || [],
+      licensedStates: provider['Licensed States']?.split(', ') || []
+    })), [providerData]);
+
+  const [filteredProviders, setFilteredProviders] = React.useState<Provider[]>(formattedProviders);
+  
+
+  const handleFilterChange = (filters: { 
+    state: string; 
+    specialty: string; 
+    virtual: boolean; 
+    insuranceType: string 
+  }) => {
+    let filtered = formattedProviders;
+    
+    if (filters.state) {
+      filtered = filtered.filter(provider => 
+        provider.licensedStates.includes(filters.state)
+      );
+    }
+    
+    if (filters.specialty) {
+      filtered = filtered.filter(provider => 
+        provider.specialties.includes(filters.specialty)
+      );
+    }
+    
+    setFilteredProviders(filtered);
+  };
 
   return (
     <div style={{ 
@@ -66,7 +88,11 @@ const BookNow: React.FC<BookNowProps> = ({
       fontFamily: "Inter, sans-serif",
       background: "#fffaf6"
     }}>
-      {/* Main Content Container */}
+      <ProviderFilter 
+        providers={formattedProviders}
+        onFilterChange={handleFilterChange}
+      />
+      
       <div style={{ 
         display: "flex",
         flex: 1,
@@ -74,17 +100,16 @@ const BookNow: React.FC<BookNowProps> = ({
         justifyContent: "center",
         padding: "40px 24px"
       }}>
-        {/* Provider Selection Container */}
         <div style={{ 
           width: "1000px",
           maxWidth: "100%",
           padding: "0 24px",
         }}>
-          <h1 style={{ textAlign: 'center', fontSize: '30px', marginBottom: '48px', color:'#333', fontWeight: '600' }}>Choose your Provider</h1>
           <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-            {formattedProviders.map((provider) => (
+            {filteredProviders.map((provider) => (
               <div
                 key={provider.id}
+                onClick={() => onProviderSelect(provider.id)}
                 style={{
                   padding: "40px",
                   background: "white",
@@ -97,7 +122,6 @@ const BookNow: React.FC<BookNowProps> = ({
                   transition: 'all 0.2s ease-in-out'
                 }}
               >
-                {/* Provider Name and Pronouns Header */}
                 <h2 style={{ 
                   fontSize: "36px", 
                   marginTop: 0, 
@@ -105,16 +129,9 @@ const BookNow: React.FC<BookNowProps> = ({
                   fontWeight: "500"
                 }}>
                   {provider.name}
-                  <span style={{ 
-                    fontSize: "16px", 
-                    color: "#666", 
-                    fontWeight: "normal",
-                    marginLeft: "8px" 
-                  }}>(she/her)</span>
                 </h2>
   
                 <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
-                  {/* Profile Image */}
                   <div style={{
                     width: "120px",
                     height: "120px",
@@ -125,6 +142,7 @@ const BookNow: React.FC<BookNowProps> = ({
                     {provider.headshot ? (
                       <img 
                         src={convertToThumbnailUrl(provider.headshot)}
+                        alt={provider.name}
                         style={{  
                           width: "100%",
                           height: "100%",
@@ -148,7 +166,6 @@ const BookNow: React.FC<BookNowProps> = ({
                     )}
                   </div>
   
-                  {/* Specialties Container */}
                   <div style={{ flex: 1 }}>
                     <div style={{ 
                       display: "flex", 
@@ -156,7 +173,6 @@ const BookNow: React.FC<BookNowProps> = ({
                       gap: "8px", 
                       marginBottom: "16px" 
                     }}>
-
                       <span style={{
                         background: "#f5f5f5",
                         padding: "6px 12px",
@@ -172,7 +188,7 @@ const BookNow: React.FC<BookNowProps> = ({
                       flexWrap: "wrap", 
                       gap: "8px" 
                     }}>
-                      {provider.specialties.slice(0,6).map((specialty: string, index: number) => (
+                      {provider.specialties.slice(0,6).map((specialty, index) => (
                         <span
                           key={index}
                           style={{
@@ -189,14 +205,13 @@ const BookNow: React.FC<BookNowProps> = ({
                   </div>
                 </div>
   
-                {/* Description Text */}
                 <p style={{ 
                   color: "#555",
                   lineHeight: "1.8",
                   fontSize: "16px",
                   margin: "0"
                 }}>
-                  {provider.name} has always known that their role in the Mental Health Industry was a "calling" not just a choice. They are passionate about assisting clients with improving their quality of life and daily functioning during the most delicate and vulnerable episodes in their lives. They assist adults, couples and families with developing coping strategies, mental health/interpersonal...
+                  {provider.name} has always known that their role in the Mental Health Industry was a "calling" not just a choice. They are passionate about assisting clients with improving their quality of life and daily functioning during the most delicate and vulnerable episodes in their lives.
                 </p>
               </div>
             ))}
@@ -205,7 +220,6 @@ const BookNow: React.FC<BookNowProps> = ({
       </div>
     </div>
   );
-
-}
+};
 
 export default BookNow;
