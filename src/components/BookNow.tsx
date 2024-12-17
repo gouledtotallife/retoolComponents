@@ -9,6 +9,7 @@ interface RawProvider {
   'Specialties Expertise': string
   'Licensed States': string
   Bio: string
+  url: string
 }
 
 interface Provider {
@@ -19,6 +20,7 @@ interface Provider {
   specialties: string[]
   licensedStates: string[]
   bio: string
+  url: string
 }
 
 interface BookNowProps {
@@ -60,10 +62,50 @@ const BookNow: React.FC<BookNowProps> = ({
         name: provider['Full Name'],
         role: provider['License Type'],
         headshot: provider['Professional Headshot'],
-        bio: provider['Bio'] || '', // Add this line
-        specialties: provider['Specialties Expertise']?.includes(', ')
-          ? provider['Specialties Expertise']?.split(', ')
-          : provider['Specialties Expertise']?.split(' ') || [],
+        bio: provider['Bio'] || '',
+        url: provider['url'] || '',
+        specialties: provider['Specialties Expertise']
+          ? (() => {
+              const combinedTerms = [
+                'Coping Skills',
+                'Anger Management',
+                'Behavioral Issues',
+                'Family Conflict',
+                'Substance Abuse',
+                'Life Transitions',
+                'Life Coaching',
+                'Peer Relationships',
+                'Self Esteem',
+                'Weight Loss',
+                'Grief and Loss',
+                'Anxiety Disorders'
+                // Add more combined terms as needed
+              ]
+
+              // First, determine if the string contains commas
+              const hasCommas = provider['Specialties Expertise'].includes(',')
+
+              // Split based on whether commas exist
+              const initialSplit = hasCommas
+                ? provider['Specialties Expertise'].split(',')
+                : provider['Specialties Expertise'].split(' ')
+
+              return initialSplit
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0)
+                .flatMap((specialty) => {
+                  // Check if this piece is part of a combined term
+                  const matchedTerm = combinedTerms.find(
+                    (term) =>
+                      term.toLowerCase() === specialty.toLowerCase() ||
+                      combinedTerms.some((term) =>
+                        specialty.toLowerCase().includes(term.toLowerCase())
+                      )
+                  )
+                  return matchedTerm || specialty
+                })
+            })()
+          : [],
         licensedStates: provider['Licensed States']?.split(', ') || []
       })),
     [providerData]
@@ -104,9 +146,15 @@ const BookNow: React.FC<BookNowProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        // height: '100%', // Added this
+        width: '100%', // Added this
         fontFamily: 'Inter, sans-serif',
-        background: '#fffaf6'
+        background: '#fffaf6',
+        position: 'absolute'
+        // top: 0,
+        // left: 0,
+        // right: 0,
+        // bottom: 0
       }}
     >
       <ProviderFilter
@@ -120,18 +168,25 @@ const BookNow: React.FC<BookNowProps> = ({
           flex: 1,
           minHeight: 0,
           justifyContent: 'center',
-          padding: '40px 24px'
+          padding: '40px 24px',
+          background: '#fffaf6'
         }}
       >
         <div
           style={{
             width: '1000px',
             maxWidth: '100%',
-            padding: '0 24px'
+            padding: '0 24px',
+            background: '#fffaf6'
           }}
         >
           <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '32px',
+              background: '#fffaf6'
+            }}
           >
             {filteredProviders.map((provider) => (
               <div
@@ -144,20 +199,37 @@ const BookNow: React.FC<BookNowProps> = ({
                   margin: '0 auto',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                   borderRadius: '3%',
-                  border: `2px solid ${selectedProvider === provider.id ? '#007AFF' : '#E5E5E5'}`,
+                  border: `2px solid ${selectedProvider === provider.id ? '#fa7268' : '#E5E5E5'}`,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease-in-out'
                 }}
               >
                 <h2
                   style={{
-                    fontSize: '36px',
+                    fontSize: '28px',
                     marginTop: 0,
-                    marginBottom: '24px',
-                    fontWeight: '500'
+                    marginBottom: '12px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
                   }}
                 >
                   {provider.name}
+                  <a
+                    href={provider.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontSize: '17px',
+                      color: '#FF6B6B', // Coral/salmon pink color
+                      textDecoration: 'none',
+                      marginLeft: '8px'
+                    }}
+                  >
+                    Full Profile {' >'}
+                  </a>
                 </h2>
 
                 <div
@@ -212,10 +284,10 @@ const BookNow: React.FC<BookNowProps> = ({
                     >
                       <span
                         style={{
-                          background: '#f5f5f5',
                           padding: '6px 12px',
                           borderRadius: '20px',
-                          fontSize: '14px'
+                          fontSize: '14px',
+                          fontWeight: 'bold'
                         }}
                       >
                         {provider.role}

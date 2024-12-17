@@ -1,21 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'
 
 interface Provider {
-  id: string;
-  name: string;
-  role: string;
-  specialties: string[];
-  licensedStates: string[];
+  id: string
+  name: string
+  role: string
+  specialties: string[]
+  licensedStates: string[]
 }
 
 interface ProviderFilterProps {
-  providers: Provider[];
+  providers: Provider[]
   onFilterChange: (filters: {
-    state: string;
-    specialty: string;
-    virtual: boolean;
-    insuranceType: string;
-  }) => void;
+    state: string
+    specialty: string
+    virtual: boolean
+    insuranceType: string
+    searchQuery: string
+  }) => void
 }
 
 const US_STATES = [
@@ -69,87 +70,105 @@ const US_STATES = [
   { name: 'West Virginia', abbr: 'WV' },
   { name: 'Wisconsin', abbr: 'WI' },
   { name: 'Wyoming', abbr: 'WY' }
-];
+]
 
+const ProviderFilter: React.FC<ProviderFilterProps> = ({
+  providers,
+  onFilterChange
+}) => {
+  const [selectedState, setSelectedState] = useState('')
+  const [selectedSpecialty, setSelectedSpecialty] = useState('')
+  const [isVirtual, setIsVirtual] = useState(false)
+  const [selectedInsurance, setSelectedInsurance] = useState('All Savers')
+  const [searchQuery, setSearchQuery] = useState('')
 
-const ProviderFilter: React.FC<ProviderFilterProps> = ({ providers, onFilterChange, currentPage, itemsPerPage = 10, totalPages }) => {
-  const [selectedState, setSelectedState] = React.useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = React.useState('');
-  const [isVirtual, setIsVirtual] = React.useState(false);
-  const [selectedInsurance, setSelectedInsurance] = React.useState('All Savers');
-  
+  // Get unique states and specialties
+  const specialties = [
+    ...new Set(providers.flatMap((provider) => provider.specialties))
+  ].sort()
 
-  // Get unique states and specialties    
-  const states = [...new Set(providers.flatMap(provider => provider.licensedStates))].sort();
-  const specialties = [...new Set(providers.flatMap(provider => provider.specialties))].sort();
-
-  const handleFilterChange = (
-    state: string = selectedState,
-    specialty: string = selectedSpecialty,
-    virtual: boolean = isVirtual,
-    insurance: string = selectedInsurance
-  ) => {
-    setSelectedState(state);
-    setSelectedSpecialty(specialty);
-    setIsVirtual(virtual);
-    setSelectedInsurance(insurance);
-    
+  useEffect(() => {
     onFilterChange({
-      state,
-      specialty,
-      virtual,
-      insuranceType: insurance
-    });
-  };
+      state: selectedState,
+      specialty: selectedSpecialty,
+      virtual: isVirtual,
+      insuranceType: selectedInsurance,
+      searchQuery: searchQuery
+    })
+  }, [
+    selectedState,
+    selectedSpecialty,
+    isVirtual,
+    selectedInsurance,
+    searchQuery
+  ])
 
   return (
-    <div style={{ display: 'flex', gap: '12px', padding: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-      <select 
+    <div
+      style={{
+        display: 'flex',
+        gap: '12px',
+        padding: '16px',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        background: '#fffaf6'
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Search for a provider..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{
+          padding: '8px 16px',
+          borderRadius: '20px',
+          border: '1px solid #E5E5E5',
+          width: '300px',
+          fontSize: '14px',
+          outline: 'none',
+          background: 'white'
+        }}
+      />
+
+      <select
         value={selectedState}
-        onChange={(e) => handleFilterChange(e.target.value)}
+        onChange={(e) => setSelectedState(e.target.value)}
         style={selectStyle}
       >
-        
         <option value="">All States</option>
-        {US_STATES.map(state => (
+        {US_STATES.map((state) => (
           <option key={state.abbr} value={state.abbr}>
             {state.abbr}
           </option>
         ))}
       </select>
-{/* 
-      <select 
-        value={selectedInsurance}
-        onChange={(e) => handleFilterChange(selectedState, selectedSpecialty, isVirtual, e.target.value)}
-        style={selectStyle}
-      >
-      </select> */}
 
-      <select 
+      <select
         value={selectedSpecialty}
-        onChange={(e) => handleFilterChange(selectedState, e.target.value)}
+        onChange={(e) => setSelectedSpecialty(e.target.value)}
         style={selectStyle}
       >
         <option value="">All Specialties</option>
-        {specialties.map(specialty => (
-          <option key={specialty} value={specialty}>{specialty}</option>
+        {specialties.map((specialty) => (
+          <option key={specialty} value={specialty}>
+            {specialty}
+          </option>
         ))}
       </select>
 
-      <button 
-        onClick={() => handleFilterChange(selectedState, selectedSpecialty, !isVirtual)}
+      {/* <button
+        onClick={() => setIsVirtual(!isVirtual)}
         style={{
           ...selectStyle,
           background: isVirtual ? '#007AFF' : 'white',
-          color: isVirtual ? 'white' : 'black',
+          color: isVirtual ? 'white' : 'black'
         }}
       >
         Virtual
-      </button>
+      </button> */}
     </div>
-    
-  );
-};
+  )
+}
 
 const selectStyle = {
   padding: '8px 16px',
@@ -158,6 +177,6 @@ const selectStyle = {
   fontSize: '14px',
   cursor: 'pointer',
   outline: 'none'
-};
+}
 
-export default ProviderFilter;
+export default ProviderFilter
