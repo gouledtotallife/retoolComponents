@@ -1,0 +1,39 @@
+.provider-filter-container {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fffaf6;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.provider-search,
+.state-select,
+.specialty-select {
+  flex: 1;
+  min-width: 150px;
+  max-width: 250px;
+  height: 40px;
+}
+
+@media (max-width: 768px) {
+  .provider-filter-container {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .provider-search,
+  .state-select,
+  .specialty-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 4px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .provider-filter-container {
+    padding: 8px;
+  }
+}
